@@ -16,6 +16,9 @@ typedef enum{
 	RSA_SUCCESS,
 	RSA_INVERT_FAILED,	
 	RSA_FILE_ERROR
+
+	RSA_KEY_ENCRYPT_ERROR,
+	RSA_KEY_ENCRYPT_SUCCESS
 }RSA_CODE;
 
 void rsa_init(rsactx_t * rsactx){
@@ -110,10 +113,46 @@ int rsakeygen(char * public_key_filename,
 	return RSA_SUCCESS;
 }
 
+RSA_CODE rsaencrypt(char *  key, char * output_filename, char public_key_filename){
+	char key_buff[16] = {};
+	mpz_t cipher_text;
+	mpz_t public_key;
+	mpz_t n;
+	mpz_t encrypted_key;
+	int flag;
+
+	if (strlen(key) > 16){
+		return RSA_KEY_ENCRYPT_ERROR;
+	}
+	// Retrive public key
+	FILE * public_key_fp = fopen(public_key_filename, "wb");
+
+	mpz_init(cipher_text);
+	mpz_init(public_key);
+	mpz_init(encrypted_key);
+
+	if (!public_key_fp){
+		printf( "Couldn't open file \"%s\"\n", public_key_filename);
+		return RSA_FILE_ERROR;
+	}	 
+	fscanf(public_key_fp, "%16s", key_buff);
+	if (mpz_set_str(public_key, 16)){
+		return RSA_KEY_ENCRYPT_ERROR;
+	}		
+	memnset(key_buff, 0, 16);
+
+	
+	memncpy(key_buff, key);
+	if (mpz_set_str(cipher_text, 16)){
+		return RSA_KEY_ENCRYPT_ERROR;
+	}	
+	mpz_pow()
+}
 int main(int argc, char ** argv ){
 	mpz_t key;
 	mpz_t bits;
 
+	// 
 	rsakeygen(argv[1], argv[2],
 				"12622624516681506749",
 				"10325958134448386513",
