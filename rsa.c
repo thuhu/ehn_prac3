@@ -228,30 +228,89 @@ RSA_CODE rsadecrypt(char *  input_filename, char * output_filename, char * priva
 	fclose(output_file_fp);
 	return RSA_SUCCESS;
 }
+
+int get_cmd_arg(char * src, int argc, char ** argv, char * tag);
+void usage(void);
 int main(int argc, char ** argv ){
 	mpz_t key;
 	mpz_t bits;
-
+	char user_rc4_key[20] = {0};
+	char user_rc4_hex_key [256] = {0};
+	char tmp[100] = {0};
+	char output_filename[100];
+	char public_key_filename[100];
+	char private_key_filename[100];
+	FILE * user_key_fp;
 	
-	// rsakeygen(argv[1], argv[2],
-	// 			"12622624516681506749",
-	// 			"10325958134448386513",
-	// key, bits);
+	if (!get_cmd_arg(public_key_filename, argc, argv, "-KU")){
+		usage();
+		return 2;
+	}
+	if (!get_cmd_arg(private_key_filename, argc, argv, "-KR")){
+		usage();
+		return 2;
+	}	
+	rsakeygen(public_key_filename, private_key_filename,
+				"12622624516681506749",
+				"10325958134448386513",
+	key, bits);
 
 	// Make sure that the key is 16 bytes long
-	char user_rc4_key[20] = {0};
-	char user_rc4_hex_key [100] = {0};
-	char tmp[3] = {0};
+	// char user_rc4_key[20] = {0};
+	// char user_rc4_hex_key [256] = {0};
+	// char tmp[100] = {0};
+	// char output_filename[100];
+	// char public_key_filename[100];
+	// FILE * user_key_fp;
 
-	printf("Enter RC4 key (Plain text): ");
-	scanf("%32s", user_rc4_key);
-	for (int i = 0; i < 16; i++){
-		sprintf(tmp, "%02x", user_rc4_key[i]);
-		strcat(user_rc4_hex_key, tmp);
-	}
-	printf("User key (Base-16)%s", user_rc4_hex_key);
-	// rsaencrypt("01234500000000000000000000000000", argv[1], argv[2]);
+	// // Get output file
+	// if (!get_cmd_arg(output_filename, argc, argv, "-fo")){
+	// 	usage();
+	// 	return 2;
+	// }
+	// if (!get_cmd_arg(public_key_filename, argc, argv, "-KU")){
+	// 	usage();
+	// 	return 2;
+	// }
+
+	// // Check if user provided key file.
+	// if (!get_cmd_arg(tmp, argc, argv, "-key")){
+	// 	printf("Enter RC4 key (Plain text): ");
+	// 	scanf("%32s", user_rc4_key);
+
+	// }else {
+	// 	char * line_buff = NULL;
+	// 	size_t len = 0;
+	// 	get_cmd_arg(tmp, argc, argv, "-key");
+	// 	user_key_fp = fopen(tmp, "rb");
+	// 	if (!user_key_fp){
+	// 		printf( "Couldn't open file \"%s\"\n", tmp);
+	// 		return 1;
+	// 	}
+	// 	getline(&line_buff, &len, user_key_fp);
+	// 	strncpy(user_rc4_key, line_buff, strlen(line_buff) - 1); // Remove the new line.
+	// }
+	// for (int i = 0; i < 16; i++){
+	// 	sprintf(tmp, "%02x", user_rc4_key[i]);
+	// 	strcat(user_rc4_hex_key, tmp);
+	// }	
+	// printf("User key (Base-16): %s\n", user_rc4_hex_key);
+
+	// rsaencrypt(user_rc4_key, output_filename, public_key_filename);
 	// rsadecrypt(argv[1], argv[2], argv[3]);
 	return 0;
 }
-
+int get_cmd_arg(char * src, int argc, char ** argv, char * tag){
+	for (int i = 0; i < argc; i++){
+		if (!strcmp(argv[i], tag)){
+			if (!(i + 1 > argc)){
+				strcpy(src, argv[i + 1]);
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+void usage(void){
+	printf("Usage:\n\trsaencrypt -key key -fo outputfile -KU public_key_file\n");
+}
