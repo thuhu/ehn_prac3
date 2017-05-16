@@ -163,12 +163,70 @@ RSA_CODE rsaencrypt(char *  key, char * output_filename, char * public_key_filen
 	mpz_powm(cipher_text, cipher_text, public_key, n);
 	printf("Encrypted RC4 key: "); mpz_out_str(stdout, 16, cipher_text); putchar('\n');
 	fclose(public_key_fp);
-
+	fclose(output_file_fp);
 	// Save to file
 	mpz_out_str(output_file_fp, 10, cipher_text); fprintf(output_file_fp, "\n");
 	return RSA_SUCCESS;
 }
-RSA_CODE rsadecrypt(char *  input_filename, char * output_filename, char * public_key_filename){
+RSA_CODE rsadecrypt(char *  input_filename, char * output_filename, char * private_key_filename){
+	char * line_buff = NULL;
+	size_t len = 0;
+	mpz_t plain_text;
+	mpz_t private_key;
+	mpz_t n;
+	mpz_t encrypted_key;
+
+	// Retrive private key
+	FILE * private_key_fp = fopen(private_key_filename, "rb");
+	FILE * output_file_fp = fopen(output_filename, "wb");
+	FILE * input_file_fp = fopen(input_filename, "rb");
+
+	mpz_init(plain_text);
+	mpz_init(private_key);
+	mpz_init(encrypted_key);
+	mpz_init(n);
+
+	if (!private_key_fp){
+		printf( "Couldn't open file \"%s\"\n", private_key_filename);
+		return RSA_FILE_ERROR;
+	}	 
+	if (!output_file_fp){
+		printf( "Couldn't open file \"%s\"\n", output_filename);
+		return RSA_FILE_ERROR;		
+	}
+	if (!input_file_fp){
+		printf( "Couldn't open file \"%s\"\n", input_filename);
+		return RSA_FILE_ERROR;		
+	}	
+	mpz_init(plain_text);
+	mpz_init(private_key);
+	mpz_init(encrypted_key);
+	mpz_init(n);
+	// Get n from the file 
+	getline(&line_buff, &len, private_key_fp);
+	printf("Read n: %s<size-%ld>\n", line_buff, strlen(line_buff));
+	if (mpz_set_str(n, line_buff, 10)){
+		return RSA_KEY_ENCRYPT_ERROR;
+	}			
+	// Get private key from the file
+	getline(&line_buff, &len, private_key_fp);
+	printf("Read private key: %s<size-%ld>\n", line_buff, strlen(line_buff));
+	if (mpz_set_str(private_key, line_buff, 10)){
+		return RSA_KEY_ENCRYPT_ERROR;
+	}		
+	// Get 	RC4 key from file.
+	getline(&line_buff, &len, input_file_fp);
+	printf("Read RC4 (Encrypted) key: %s<size-%ld>\n", line_buff, strlen(line_buff));
+	if (mpz_set_str(encrypted_key, line_buff, 10)){
+		return RSA_KEY_ENCRYPT_ERROR;
+	}			
+	mpz_powm(plain_text, encrypted_key, private_key, n);
+	printf("Decrypted RC4 key: "); mpz_out_str(stdout, 16, plain_text); putchar('\n');
+
+	fclose(private_key_fp);
+	fclose(input_file_fp);
+	fclose(output_file_fp);
+	return RSA_SUCCESS;
 }
 int main(int argc, char ** argv ){
 	mpz_t key;
@@ -179,7 +237,21 @@ int main(int argc, char ** argv ){
 	// 			"12622624516681506749",
 	// 			"10325958134448386513",
 	// key, bits);
-	rsaencrypt("01234500000000000000000000000000", argv[1], argv[2]);
+
+	// Make sure that the key is 16 bytes long
+	char user_rc4_key[20] = {0};
+	char user_rc4_hex_key [100] = {0};
+	char tmp[3] = {0};
+
+	printf("Enter RC4 key (Plain text): ");
+	scanf("%32s", user_rc4_key);
+	for (int i = 0; i < 16; i++){
+		sprintf(tmp, "%02x", user_rc4_key[i]);
+		strcat(user_rc4_hex_key, tmp);
+	}
+	printf("User key (Base-16)%s", user_rc4_hex_key);
+	// rsaencrypt("01234500000000000000000000000000", argv[1], argv[2]);
+	// rsadecrypt(argv[1], argv[2], argv[3]);
 	return 0;
 }
 
