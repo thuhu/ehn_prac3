@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <gmp.h>
 #include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
 
 // Context for rsa
 typedef struct {
@@ -15,7 +17,7 @@ typedef struct {
 typedef enum{
 	RSA_SUCCESS,
 	RSA_INVERT_FAILED,	
-	RSA_FILE_ERROR
+	RSA_FILE_ERROR,
 
 	RSA_KEY_ENCRYPT_ERROR,
 	RSA_KEY_ENCRYPT_SUCCESS
@@ -113,50 +115,71 @@ int rsakeygen(char * public_key_filename,
 	return RSA_SUCCESS;
 }
 
-RSA_CODE rsaencrypt(char *  key, char * output_filename, char public_key_filename){
-	char key_buff[16] = {};
+RSA_CODE rsaencrypt(char *  key, char * output_filename, char * public_key_filename){
+	char key_buff[256] = {};
+	char * line_buff = NULL;
+	size_t len = 0;
 	mpz_t cipher_text;
 	mpz_t public_key;
 	mpz_t n;
 	mpz_t encrypted_key;
-	int flag;
 
-	if (strlen(key) > 16){
+	if (strlen(key) > 32){
 		return RSA_KEY_ENCRYPT_ERROR;
 	}
 	// Retrive public key
-	FILE * public_key_fp = fopen(public_key_filename, "wb");
+	FILE * public_key_fp = fopen(public_key_filename, "rb");
+	FILE * output_file_fp = fopen(output_filename, "wb");
 
 	mpz_init(cipher_text);
 	mpz_init(public_key);
 	mpz_init(encrypted_key);
+	mpz_init(n);
 
 	if (!public_key_fp){
 		printf( "Couldn't open file \"%s\"\n", public_key_filename);
 		return RSA_FILE_ERROR;
 	}	 
-	fscanf(public_key_fp, "%16s", key_buff);
-	if (mpz_set_str(public_key, 16)){
+	if (!output_file_fp){
+		printf( "Couldn't open file \"%s\"\n", output_filename);
+		return RSA_FILE_ERROR;		
+	}
+	// Get n from the file 
+	getline(&line_buff, &len, public_key_fp);
+	printf("Read n: %s<size-%ld>\n", line_buff, strlen(line_buff));
+	if (mpz_set_str(n, line_buff, 10)){
+		return RSA_KEY_ENCRYPT_ERROR;
+	}			
+	// Get public key from the file
+	getline(&line_buff, &len, public_key_fp);
+	printf("Read public key: %s<size-%ld>\n", line_buff, strlen(line_buff));
+	if (mpz_set_str(public_key, line_buff, 10)){
 		return RSA_KEY_ENCRYPT_ERROR;
 	}		
-	memnset(key_buff, 0, 16);
-
-	
-	memncpy(key_buff, key);
-	if (mpz_set_str(cipher_text, 16)){
+	if (mpz_set_str(cipher_text, key,16)){
 		return RSA_KEY_ENCRYPT_ERROR;
 	}	
-	mpz_pow()
+	printf("RC4 Key: "); mpz_out_str(stdout, 16, cipher_text); putchar('\n');
+	mpz_powm(cipher_text, cipher_text, public_key, n);
+	printf("Encrypted RC4 key: "); mpz_out_str(stdout, 16, cipher_text); putchar('\n');
+	fclose(public_key_fp);
+
+	// Save to file
+	mpz_out_str(output_file_fp, 10, cipher_text); fprintf(output_file_fp, "\n");
+	return RSA_SUCCESS;
+}
+RSA_CODE rsadecrypt(char *  input_filename, char * output_filename, char * public_key_filename){
 }
 int main(int argc, char ** argv ){
 	mpz_t key;
 	mpz_t bits;
 
-	// 
-	rsakeygen(argv[1], argv[2],
-				"12622624516681506749",
-				"10325958134448386513",
-	 key, bits);
+	
+	// rsakeygen(argv[1], argv[2],
+	// 			"12622624516681506749",
+	// 			"10325958134448386513",
+	// key, bits);
+	rsaencrypt("01234500000000000000000000000000", argv[1], argv[2]);
 	return 0;
 }
 
