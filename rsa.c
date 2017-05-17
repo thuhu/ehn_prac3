@@ -49,13 +49,7 @@ void rsa_clean(rsactx_t * rsactx){
 	mpz_clear(rsactx->n);
 	mpz_clear(rsactx->phi);
 }
-int rsakeygen(char * public_key_filename,
-				char * private_key_filename,
-				char * num_p,
-				char * num_q,
-				mpz_t key,				
-				mpz_t bits
-	){
+int rsakeygen(char * public_key_filename, char * private_key_filename, char * num_p, char * num_q, mpz_t key, mpz_t bits){
 	// Open the files
 	FILE  * public_key_fp, *private_key_fp;
 	rsactx_t rsactx;
@@ -159,13 +153,14 @@ RSA_CODE rsaencrypt(char *  key, char * output_filename, char * public_key_filen
 	if (mpz_set_str(cipher_text, key,16)){
 		return RSA_KEY_ENCRYPT_ERROR;
 	}	
-	printf("RC4 Key: "); mpz_out_str(stdout, 16, cipher_text); putchar('\n');
 	mpz_powm(cipher_text, cipher_text, public_key, n);
-	printf("Encrypted RC4 key: "); mpz_out_str(stdout, 16, cipher_text); putchar('\n');
-	fclose(public_key_fp);
-	fclose(output_file_fp);
 	// Save to file
 	mpz_out_str(output_file_fp, 10, cipher_text); fprintf(output_file_fp, "\n");
+	printf("Encrypted RC4 key: "); mpz_out_str(stdout, 16, cipher_text); putchar('\n');
+
+	fclose(public_key_fp);
+	fclose(output_file_fp);
+
 	return RSA_SUCCESS;
 }
 RSA_CODE rsadecrypt(char *  input_filename, char * output_filename, char * private_key_filename){
@@ -222,6 +217,7 @@ RSA_CODE rsadecrypt(char *  input_filename, char * output_filename, char * priva
 	}			
 	mpz_powm(plain_text, encrypted_key, private_key, n);
 	printf("Decrypted RC4 key: "); mpz_out_str(stdout, 16, plain_text); putchar('\n');
+	mpz_out_str(output_file_fp, 10, plain_text); fprintf(output_file_fp, "\n");
 
 	fclose(private_key_fp);
 	fclose(input_file_fp);
@@ -238,10 +234,25 @@ int main(int argc, char ** argv ){
 	char user_rc4_hex_key [256] = {0};
 	char tmp[100] = {0};
 	char output_filename[100];
+	char input_filename[100];
 	char public_key_filename[100];
 	char private_key_filename[100];
 	FILE * user_key_fp;
 	
+	// if (!get_cmd_arg(public_key_filename, argc, argv, "-KU")){
+	// 	usage();
+	// 	return 2;
+	// }
+	// if (!get_cmd_arg(private_key_filename, argc, argv, "-KR")){
+	// 	usage();
+	// 	return 2;
+	// }	
+	// rsakeygen(public_key_filename, private_key_filename,
+	// 			"12622624516681506749",
+	// 			"10325958134448386513",
+	// key, bits);
+
+
 	if (!get_cmd_arg(public_key_filename, argc, argv, "-KU")){
 		usage();
 		return 2;
@@ -251,17 +262,11 @@ int main(int argc, char ** argv ){
 		return 2;
 	}	
 	rsakeygen(public_key_filename, private_key_filename,
-				"12622624516681506749",
-				"10325958134448386513",
+				"281",
+				"503",
 	key, bits);
 
-	// Make sure that the key is 16 bytes long
-	// char user_rc4_key[20] = {0};
-	// char user_rc4_hex_key [256] = {0};
-	// char tmp[100] = {0};
-	// char output_filename[100];
-	// char public_key_filename[100];
-	// FILE * user_key_fp;
+
 
 	// // Get output file
 	// if (!get_cmd_arg(output_filename, argc, argv, "-fo")){
@@ -296,8 +301,25 @@ int main(int argc, char ** argv ){
 	// }	
 	// printf("User key (Base-16): %s\n", user_rc4_hex_key);
 
-	// rsaencrypt(user_rc4_key, output_filename, public_key_filename);
-	// rsadecrypt(argv[1], argv[2], argv[3]);
+	// rsaencrypt(user_rc4_hex_key, output_filename, public_key_filename);
+
+
+
+
+	// Decrypt key file
+	// if (!get_cmd_arg(input_filename, argc, argv, "-fi")){
+	// 	usage();
+	// 	return 2;
+	// }	
+	// if (!get_cmd_arg(output_filename, argc, argv, "-fo")){
+	// 	usage();
+	// 	return 2;
+	// }
+	// if (!get_cmd_arg(private_key_filename, argc, argv, "-KR")){
+	// 	usage();
+	// 	return 2;
+	// }
+	// rsadecrypt(input_filename, output_filename, private_key_filename);
 	return 0;
 }
 int get_cmd_arg(char * src, int argc, char ** argv, char * tag){
