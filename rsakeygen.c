@@ -61,8 +61,8 @@ int rsakeygen(char * public_key_filename, char * private_key_filename, mpz_t num
 
 	mpz_set(rsactx.p, num_p);
 	mpz_set(rsactx.q, num_q);
-  	printf ("P :   "), mpz_out_str(stdout, 16, rsactx.p); putchar('\n');
-  	printf ("Q :   "), mpz_out_str(stdout, 16, rsactx.q); putchar('\n');
+  	printf ("P :   "), mpz_out_str(stdout, 10, rsactx.p); putchar('\n');
+  	printf ("Q :   "), mpz_out_str(stdout, 10, rsactx.q); putchar('\n');
 
 	// Compute n
   	mpz_mul(rsactx.n, rsactx.p, rsactx.q);
@@ -204,8 +204,9 @@ int main(int argc, char ** argv ){
 	if (convert_key(user_init_key, user_rc4_hex_key, strlen(user_init_key)) != 0){
 		return 0;
 	}
+	int key_len = strlen(user_init_key) / 4;
 
-	rc4_init(&rc4ctx, test_vector, strlen(test_vector));	
+	rc4_init(&rc4ctx, user_rc4_hex_key, key_len);	
 	// rc4_init(&rc4ctx, user_rc4_hex_key, 8);	
 	// printf("For %ld-bits\n", mpz_get_ui(bits));
 	for (int i = 1; i <= mpz_get_ui(bits)/2 - 1; i++){

@@ -54,7 +54,7 @@ RSA_CODE rsadecrypt(char *  input_filename, char * output_filename, char * priva
 	}			
 	mpz_powm(plain_text, encrypted_key, private_key, n);
 	printf("Decrypted RC4 key: "); mpz_out_str(stdout, 16, plain_text); putchar('\n');
-	mpz_out_str(output_file_fp, 10, plain_text); fprintf(output_file_fp, "\n");
+	mpz_out_str(output_file_fp, 16, plain_text); fprintf(output_file_fp, "\n");
 
 	fclose(private_key_fp);
 	fclose(input_file_fp);
